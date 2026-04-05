@@ -10,6 +10,7 @@ const progressRoutes = require('./routes/progress');
 const chatRoutes = require('./routes/chat');
 const waterRoutes = require('./routes/water');
 const workoutRoutes = require('./routes/workouts');
+const sleepRoutes = require('./routes/sleep');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/progress', progressRoutes);
 app.use('/chat', chatRoutes);
 app.use('/water', waterRoutes);
 app.use('/workouts', workoutRoutes);
+app.use('/sleep', sleepRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

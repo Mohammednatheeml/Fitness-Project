@@ -1,8 +1,22 @@
 const express = require('express');
 const pool = require('../config/db');
 const authMiddleware = require('../middlewares/authMiddleware');
+const foodDatabase = require('../utils/foodDatabase');
 
 const router = express.Router();
+
+// Search Bio-Database
+router.get('/search', authMiddleware, (req, res) => {
+  const query = req.query.q ? req.query.q.toLowerCase() : '';
+  if (!query) return res.json([]);
+
+  const results = foodDatabase.filter(food => 
+    food.name.toLowerCase().includes(query) || 
+    food.group.toLowerCase().includes(query)
+  ).slice(0, 10); // Limit to top 10 matches
+
+  res.json(results);
+});
 
 router.post('/', authMiddleware, async (req, res) => {
   const { name, calories, protein, carbs, fat, log_date } = req.body;
@@ -38,6 +52,15 @@ router.get('/today', authMiddleware, async (req, res) => {
       res.json({ logs: rows, summary: { total_calories, total_protein, total_carbs, total_fat, target_calories } });
     } catch (error) {
       res.status(500).json({ error: 'Server error fetching calories' });
+    }
+});
+
+router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM food_logs WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+        res.json({ message: 'Food log deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error deleting food log' });
     }
 });
 
