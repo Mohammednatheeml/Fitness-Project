@@ -14,6 +14,14 @@
   .neon-text-gradient {
     @apply bg-gradient-to-r from-primary to-primary-dim bg-clip-text text-transparent transform;
   }
+
+  .glass-input {
+    @apply w-full bg-surface-high/40 border border-outline-variant/20 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary/50 transition-all font-body text-lg placeholder:text-zinc-600;
+  }
+
+  .social-btn {
+    @apply flex items-center justify-center gap-3 bg-surface-variant/20 backdrop-blur-md border border-outline-variant/20 rounded-2xl px-6 py-3.5 text-on-surface-variant font-display font-bold hover:bg-surface-variant/40 hover:text-white transition-all duration-300;
+  }
 }
 
 body {
