@@ -10,10 +10,25 @@ router.get('/search', authMiddleware, (req, res) => {
   const query = req.query.q ? req.query.q.toLowerCase() : '';
   if (!query) return res.json([]);
 
-  const results = foodDatabase.filter(food => 
-    food.name.toLowerCase().includes(query) || 
-    food.group.toLowerCase().includes(query)
-  ).slice(0, 10); // Limit to top 10 matches
+  const queryWords = query.split(' ').filter(w => w.length > 0);
+  
+  const results = foodDatabase
+    .filter(food => {
+      const foodName = food.name.toLowerCase();
+      const foodGroup = food.group.toLowerCase();
+      return queryWords.every(word => foodName.includes(word) || foodGroup.includes(word));
+    })
+    .sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      // Prioritize exact start matches
+      const aStarts = aName.startsWith(query);
+      const bStarts = bName.startsWith(query);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return aName.length - bName.length; // Shorter names first
+    })
+    .slice(0, 10);
 
   res.json(results);
 });

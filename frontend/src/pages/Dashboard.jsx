@@ -112,6 +112,24 @@ const Dashboard = () => {
            CALIBRATION DATA
          </button>
       </GlassCard>
+      
+      {/* METABOLIC OVERFLOW ALERT */}
+      {summary.total_calories > summary.target_calories && (
+        <div className="bg-red-500/10 border border-red-500/30 backdrop-blur-xl rounded-[2.5rem] p-6 flex items-center gap-6 animate-pulse shadow-[0_0_50px_rgba(239,68,68,0.1)] group">
+           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform shadow-glow shadow-red-500/20">
+              <AlertCircle size={32} />
+           </div>
+           <div className="flex-1">
+              <h4 className="font-display font-black text-xs text-red-500 uppercase tracking-[0.4em] mb-1">CRITICAL OVERFLOW DETECTED</h4>
+              <p className="text-white text-lg font-medium italic opacity-90 leading-relaxed">
+                 Caloric saturation reached. Bio-fuel equilibrium is unstable. Adjust protocol intake or increase metabolic burn rate immediately.
+              </p>
+           </div>
+           <div className="px-6 py-2 bg-red-500/20 border border-red-500/40 rounded-xl">
+              <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">+{(summary.total_calories - summary.target_calories)} KCAL</span>
+           </div>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="grid grid-cols-12 gap-8 items-stretch">

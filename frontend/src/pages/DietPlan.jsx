@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import GlassCard from '../components/GlassCard';
 import InfoModal from '../components/InfoModal';
-import { Coffee, Salad, Beef, Apple, Target, RefreshCw, CheckCircle, Circle } from 'lucide-react';
+import { Coffee, Salad, Beef, Apple, Target, RefreshCw, CheckCircle, Circle, Lock } from 'lucide-react';
 import { generate30DayPlan } from '../utils/dietEngine';
 
 const DietPlan = () => {
@@ -49,6 +49,10 @@ const DietPlan = () => {
   };
 
   const toggleDayCompletion = (dayNumber) => {
+      // A day is unlocked if it's Day 1, OR the previous day is completed, OR it's already completed
+      const isUnlocked = dayNumber === 1 || thirtyDayPlan[dayNumber - 2]?.completed || thirtyDayPlan[dayNumber - 1]?.completed;
+      if (!isUnlocked) return;
+
       const updated = thirtyDayPlan.map(day => {
           if (day.dayNumber === dayNumber) return {...day, completed: !day.completed};
           return day;
@@ -59,7 +63,8 @@ const DietPlan = () => {
       }
   };
 
-  const showDetails = (mealName, macroHint) => {
+  const showDetails = (mealName, macroHint, isUnlocked) => {
+    if (!isUnlocked) return;
     setModalTitle(`${mealName}`);
     setModalContent(`This meal protocol adheres to the structural constraint: ${macroHint}. Portion sizes are mathematically scaled to hit your exact BMR ± 500 kcal requirement.`);
     setIsModalOpen(true);
@@ -110,44 +115,55 @@ const DietPlan = () => {
       </header>
 
       <div className="grid grid-cols-1 space-y-12">
-         {thirtyDayPlan.map((day) => (
-             <div key={day.dayNumber} className="relative">
-                 {/* Visual connector line for timeline effect */}
-                 {day.dayNumber !== 30 && <div className="absolute left-[39px] top-20 bottom-[-48px] w-0.5 bg-outline-variant/5"></div>}
-                 
-                 <div className="flex items-start gap-6">
-                     <div 
-                        onClick={() => toggleDayCompletion(day.dayNumber)}
-                        className={`w-20 h-20 rounded-3xl flex flex-col items-center justify-center shrink-0 border cursor-pointer transition-all duration-300 z-10 
-                          ${day.completed ? 'bg-primary border-primary shadow-glow shadow-primary/30' : 'bg-surface-low border-outline-variant/10 hover:border-primary/50'}`}
-                     >
-                         <h4 className={`font-display text-xs font-black uppercase tracking-widest ${day.completed ? 'text-background' : 'text-zinc-500'}`}>Day</h4>
-                         <span className={`font-display text-2xl font-bold ${day.completed ? 'text-background' : 'text-white'}`}>{day.dayNumber}</span>
-                     </div>
+         {thirtyDayPlan.map((day, index) => {
+             const isUnlocked = day.dayNumber === 1 || thirtyDayPlan[index - 1]?.completed || day.completed;
+             
+             return (
+                 <div key={day.dayNumber} className="relative">
+                     {/* Visual connector line for timeline effect */}
+                     {day.dayNumber !== 30 && <div className="absolute left-[39px] top-20 bottom-[-48px] w-0.5 bg-outline-variant/5"></div>}
                      
-                     <div className="flex-1 min-w-0 pb-4">
-                         <div className="flex justify-between items-end mb-6">
-                             <div>
-                               <p className="text-xs text-primary font-bold uppercase tracking-widest mb-1">{day.totalCalories} KCAL DAILY CAP</p>
-                               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest italic flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> {day.macroHint}</p>
-                             </div>
-                             <button onClick={() => toggleDayCompletion(day.dayNumber)} className="text-zinc-600 hover:text-white transition-colors">
-                                 {day.completed ? <CheckCircle className="text-primary" /> : <Circle />}
-                             </button>
+                     <div className="flex items-start gap-6">
+                         <div 
+                            onClick={() => toggleDayCompletion(day.dayNumber)}
+                            className={`w-20 h-20 rounded-3xl flex flex-col items-center justify-center shrink-0 border cursor-pointer transition-all duration-300 z-10 
+                              ${day.completed ? 'bg-primary border-primary shadow-glow shadow-primary/30' : 
+                                isUnlocked ? 'bg-surface-low border-outline-variant/10 hover:border-primary/50' : 
+                                'bg-surface-high/50 border-outline-variant/5 opacity-40'}`}
+                         >
+                             {!isUnlocked ? (
+                                <Lock className="text-zinc-500" size={20} />
+                             ) : (
+                                <>
+                                   <h4 className={`font-display text-xs font-black uppercase tracking-widest ${day.completed ? 'text-background' : 'text-zinc-500'}`}>Day</h4>
+                                   <span className={`font-display text-2xl font-bold ${day.completed ? 'text-background' : 'text-white'}`}>{day.dayNumber}</span>
+                                </>
+                             )}
                          </div>
                          
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                             {[
-                               { label: 'Breakfast', icon: <Coffee size={18}/>, meal: day.meals.breakfast },
-                               { label: 'Lunch', icon: <Salad size={18}/>, meal: day.meals.lunch },
-                               { label: 'Dinner', icon: <Beef size={18}/>, meal: day.meals.dinner },
-                               { label: 'Snack', icon: <Apple size={18}/>, meal: day.meals.snack }
-                             ].map((m, idx) => (
-                               <GlassCard 
-                                 key={idx} 
-                                 onClick={() => showDetails(m.meal.name, day.macroHint)}
-                                 className="p-5 cursor-pointer group hover:border-primary/30 transition-all bg-surface-low/30 hover:bg-surface-high/20 border-outline-variant/5"
-                               >
+                         <div className={`flex-1 min-w-0 pb-4 transition-all duration-500 ${!isUnlocked ? 'opacity-30 blur-[2px] pointer-events-none select-none' : ''}`}>
+                             <div className="flex justify-between items-end mb-6">
+                                 <div>
+                                   <p className="text-xs text-primary font-bold uppercase tracking-widest mb-1">{day.totalCalories} KCAL DAILY CAP</p>
+                                   <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest italic flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> {day.macroHint}</p>
+                                 </div>
+                                 <button onClick={() => toggleDayCompletion(day.dayNumber)} className="text-zinc-600 hover:text-white transition-colors">
+                                     {day.completed ? <CheckCircle className="text-primary" /> : <Circle />}
+                                 </button>
+                             </div>
+                             
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                 {[
+                                   { label: 'Breakfast', icon: <Coffee size={18}/>, meal: day.meals.breakfast },
+                                   { label: 'Lunch', icon: <Salad size={18}/>, meal: day.meals.lunch },
+                                   { label: 'Dinner', icon: <Beef size={18}/>, meal: day.meals.dinner },
+                                   { label: 'Snack', icon: <Apple size={18}/>, meal: day.meals.snack }
+                                 ].map((m, idx) => (
+                                   <GlassCard 
+                                     key={idx} 
+                                     onClick={() => showDetails(m.meal.name, day.macroHint, isUnlocked)}
+                                     className="p-5 cursor-pointer group hover:border-primary/30 transition-all bg-surface-low/30 hover:bg-surface-high/20 border-outline-variant/5"
+                                   >
                                   <div className="flex justify-between items-center mb-4 text-zinc-500 group-hover:text-primary transition-colors">
                                       {m.icon}
                                       <span className="text-[10px] uppercase font-black tracking-widest">{m.label}</span>
@@ -162,7 +178,8 @@ const DietPlan = () => {
                      </div>
                  </div>
              </div>
-         ))}
+         );
+     })}
       </div>
     </div>
   );
